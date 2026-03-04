@@ -27,6 +27,7 @@ class BusquedaAnchura(Busqueda):
         abiertos.append(NodoAnchura(inicial, None, None))
         cerrados[inicial.cubo.visualizar()]=inicial
         while not solucion and len(abiertos)>0:
+            nodoActual = abiertos.pop(0)
             #LINEA A COMPLETAR
             actual = nodoActual.estado
             if actual.esFinal():
