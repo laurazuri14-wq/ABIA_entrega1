@@ -21,7 +21,7 @@ class BusquedaAnchura(Busqueda):
     def buscarSolucion(self,inicial):
         nodoActual = None
         actual, hijo = None, None
-        solucion = False
+        solucion = False #prueba
         abiertos = []
         cerrados = dict()
         abiertos.append(NodoAnchura(inicial, None, None))
