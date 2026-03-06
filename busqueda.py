@@ -62,6 +62,7 @@ class BusquedaProfundidadAcotada(Busqueda):
         cerrados[inicial.cubo.visualizar()] = inicial
         
         while not solucion and len(abiertos) > 0:
+            nodoActual = abiertos.pop()
             actual = nodoActual.estado
 
             if actual.esFinal():
