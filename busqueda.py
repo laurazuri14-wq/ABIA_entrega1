@@ -27,8 +27,7 @@ class BusquedaAnchura(Busqueda):
         abiertos.append(NodoAnchura(inicial, None, None))
         cerrados[inicial.cubo.visualizar()]=inicial
         while not solucion and len(abiertos)>0:
-            nodoActual = abiertos.pop(0)
-            #LINEA A COMPLETAR
+            nodoActual = abiertos.pop(0) #tarea 1
             actual = nodoActual.estado
             if actual.esFinal():
                 solucion = True
@@ -48,7 +47,47 @@ class BusquedaAnchura(Busqueda):
             return lista
         else:
             return None
+        
+
+class BusquedaProfundidadAcotada(Busqueda):
+    def __init__(self, cota = 6):
+        self.cota = cota
+    def buscarSolucion(self, inicial):
+        nodoActual = None
+        actual, hijo = None, None
+        solucion = False
+        abiertos = []
+        cerrados = dict()
+        abiertos.append(NodoProfundidad(inicial, None, None, 0))
+        cerrados[inicial.cubo.visualizar()] = inicial
+        
+        while not solucion and len(abiertos) > 0:
+            actual = nodoActual.estado
+
+            if actual.esFinal():
+                solucion = True
+            else:
+                if nodoActual.profundidad < self.cota:
+                    for operador in actual.operadoresAplicables():
+                        hijo = actual.aplicarOperador(operador)
+                        if hijo.cubo.visualizar() not in cerrados.keys():
+                            abiertos.append(
+                                NodoProfundidad(
+                                    hijo,
+                                    nodoActual,
+                                    operador,
+                                    nodoActual.profundidad + 1
+                                )
+                            )
+                            cerrados[hijo.cubo.visualizar()] = hijo
 
 
-
-
+        if solucion:
+            lista = []
+            nodo = nodoActual
+            while nodo.padre != None:
+                lista.insert(0, nodo.operador)
+                nodo = nodo.padre
+            return lista
+        else:
+            return None

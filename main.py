@@ -29,11 +29,11 @@ print("CUBO INICIAL (MEZCLADO):\n" + cubo.visualizar())
 
 
 
-"""
-Descomentar una vez se implemente la búsqueda en anchura
-#Creación de un problema
-problema = Problema(EstadoRubik(cubo), BusquedaAnchura())
 
+#Descomentar una vez se implemente la búsqueda en anchura
+#Creación de un problema
+#problema = Problema(EstadoRubik(cubo), BusquedaAnchura())
+problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6)) 
 
 print("SOLUCION:")
 opsSolucion = problema.obtenerSolucion()
@@ -47,4 +47,4 @@ if opsSolucion != None:
 else:
     print("no se ha encontrado solución")
 
-"""
+
