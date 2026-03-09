@@ -92,3 +92,67 @@ class BusquedaProfundidadAcotada(Busqueda):
             return lista
         else:
             return None
+
+class BusquedaProfundidadIterativa(Busqueda):
+    def __init__(self, cota_inicial=0, cota_max=20):
+        self.cota_inicial = cota_inicial
+        self.cota_max = cota_max
+
+    def buscarSolucion(self, inicial):
+        for cota in range(self.cota_inicial, self.cota_max + 1):
+            busqueda_acotada = BusquedaProfundidadAcotada(cota)
+            solucion = busqueda_acotada.buscarSolucion(inicial)
+            if solucion is not None:
+                return solucion
+        return None
+    
+    class BusquedaVoraz(Busqueda):
+
+        def heuristica(self, estado):
+            mal_colocadas = 0
+            for cara in estado.cubo.caras:
+                for casilla in cara.casillas:
+                    if casilla.color != cara.color:
+                        mal_colocadas += 1
+            return mal_colocadas
+
+        def buscarSolucion(self, inicial):
+            nodoActual = None
+            actual, hijo = None, None
+            solucion = False
+            abiertos = []
+            cerrados = dict()
+
+            abiertos.append(NodoVoraz(inicial, None, None, self.heuristica(inicial)))
+
+            while not solucion and len(abiertos) > 0:
+                abiertos.sort(key=lambda nodo: nodo.heuristica)
+                nodoActual = abiertos.pop(0)
+                actual = nodoActual.estado
+
+                if actual.esFinal():
+                    solucion = True
+                else:
+                    cerrados[actual.cubo.visualizar()] = actual
+
+                    for operador in actual.operadoresAplicables():
+                        hijo = actual.aplicarOperador(operador)
+
+                        if hijo.cubo.visualizar() not in cerrados:
+                            repetido = False
+                            for nodo in abiertos:
+                                if nodo.estado.cubo.visualizar() == hijo.cubo.visualizar():
+                                    repetido = True
+
+                            if not repetido:
+                                abiertos.append(NodoVoraz(hijo, nodoActual, operador, self.heuristica(hijo)))
+
+            if solucion:
+                lista = []
+                nodo = nodoActual
+                while nodo.padre != None:
+                    lista.insert(0, nodo.operador)
+                    nodo = nodo.padre
+                return lista
+            else:
+                return None
