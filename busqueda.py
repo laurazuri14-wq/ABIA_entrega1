@@ -212,3 +212,57 @@ class BusquedaEstrella(Busqueda):
             return lista
         else:
             return None
+    class BusquedaIDAEstrella(Busqueda):
+
+        def buscarSolucion(self, inicial):
+            # Paso 1: inicializar COTA
+            cota = inicial.heuristica()
+
+            solucion = False
+
+            while not solucion:
+                # ABIERTOS se simula con la recursión (DFS)
+                nueva_cota = float('inf')
+
+                resultado = self._dfs(inicial, 0, cota)
+
+                # Si encontramos solución
+                if isinstance(resultado, list):
+                    return resultado
+
+                # Si no hay más nodos
+                if resultado == float('inf'):
+                    return None
+
+                # Paso clave del pseudocódigo: actualizar COTA
+                cota = resultado
+
+
+        def _dfs(self, estado, g, cota):
+            # f(n) = g(n) + h(n)
+            f = g + estado.heuristica()
+
+            # Si f(n) > COTA → actualizar NUEVA_COTA
+            if f > cota:
+                return f
+
+            # Si es estado final → éxito
+            if estado.esFinal():
+                return []
+
+            minimo = float('inf')
+
+            # Expandir nodo (como en ABIERTOS)
+            for operador in estado.operadoresAplicables():
+                hijo = estado.aplicarOperador(operador)
+
+                resultado = self._dfs(hijo, g + 1, cota)
+
+                # Si se encuentra solución → propagarla
+                if isinstance(resultado, list):
+                    return [operador] + resultado
+
+                # NUEVA_COTA = mínimo de los f que superan la cota
+                minimo = min(minimo, resultado)
+
+            return minimo
