@@ -34,7 +34,13 @@ print("CUBO INICIAL (MEZCLADO):\n" + cubo.visualizar())
 #Creación de un problema
 #problema = Problema(EstadoRubik(cubo), BusquedaAnchura())
 #problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6)) 
-problema = Problema(EstadoRubik(cubo), BusquedaEstrella())
+#problema = Problema(EstadoRubik(cubo), BusquedaEstrella())
+problema = Problema(EstadoRubik(cubo), BusquedaIDAEstrella())
+opsSolucion = problema.obtenerSolucion()
+for o in opsSolucion:
+    print(cubo.visualizarMovimiento(o.getEtiqueta()))
+    cubo.mover(o.movimiento)
+
 
 
 print("SOLUCION:")
@@ -49,4 +55,7 @@ if opsSolucion != None:
 else:
     print("no se ha encontrado solución")
 
+
+
+#problema = Problema(EstadoRubik(cubo), BusquedaAEstrellaPonderada(1.5))
 
