@@ -54,12 +54,12 @@ print("CUBO INICIAL (MEZCLADO):\n" + cubo.visualizar())
 #Descomentar una vez se implemente la búsqueda en anchura
 #Creación de un problema
 #problema = Problema(EstadoRubik(cubo), BusquedaAnchura())
-problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6))
+#problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6))
 #problema = Problema(EstadoRubik(cubo), BusquedaProfundidadIterativa())
 #problema = Problema(EstadoRubik(cubo), BusquedaVoraz())
 #problema = Problema(EstadoRubik(cubo), BusquedaEstrella())
 #problema = Problema(EstadoRubik(cubo), BusquedaIDAEstrella())
-#problema = Problema(EstadoRubik(cubo), BusquedaAEstrellaPonderada())
+problema = Problema(EstadoRubik(cubo), BusquedaAEstrellaPonderada())
 
 
 
