@@ -35,10 +35,22 @@ class EstadoRubik(Estado):
     def equals(self,e):
         return self.cubo.equals(e.cubo)
 
-    def heuristica(self):
+    def heuristica1(self):
         if self.esFinal():
             return 0
         return 1
+
+    def heuristica2(self):
+        mal = 0
+
+        for cara in self.cubo.caras:
+            if cara.casillas[0].color != cara.color:
+                mal += 1
+
+        return mal
+
+    def heuristica(self):
+        return self.heuristica1()   #para pobrar la heuristica1 cambio aqui
 
 # Implementa el interfaz Operador encapsulando un movimiento (giro) Rubik
 class OperadorRubik(Operador):
