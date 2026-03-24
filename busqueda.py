@@ -3,7 +3,7 @@ from nodos import *
 
 from abc import abstractmethod
 from abc import ABCMeta
-
+print("ESTOY EN EL BUSQUEDA CORRECTO")
 
 
 #Interfaz genérico para algoritmos de búsqueda
@@ -51,18 +51,17 @@ class BusquedaAnchura(Busqueda):
         
 
 class BusquedaProfundidadAcotada(Busqueda):
-    def __init__(self, cota=6):
+    def __init__(self, cota = 6):
         self.cota = cota
-
     def buscarSolucion(self, inicial):
         nodoActual = None
         actual, hijo = None, None
         solucion = False
         abiertos = []
         cerrados = dict()
-
         abiertos.append(NodoProfundidad(inicial, None, None, 0))
-
+        cerrados[inicial.cubo.visualizar()] = inicial
+        
         while not solucion and len(abiertos) > 0:
             nodoActual = abiertos.pop()
             actual = nodoActual.estado
@@ -70,20 +69,10 @@ class BusquedaProfundidadAcotada(Busqueda):
             if actual.esFinal():
                 solucion = True
             else:
-                cerrados[actual.cubo.visualizar()] = actual
-
                 if nodoActual.profundidad < self.cota:
                     for operador in actual.operadoresAplicables():
                         hijo = actual.aplicarOperador(operador)
-                        clave = hijo.cubo.visualizar()
-
-                        esta_en_abiertos = False
-                        for nodo in abiertos:
-                            if nodo.estado.cubo.visualizar() == clave:
-                                esta_en_abiertos = True
-                                break
-
-                        if not esta_en_abiertos and clave not in cerrados:
+                        if hijo.cubo.visualizar() not in cerrados.keys():
                             abiertos.append(
                                 NodoProfundidad(
                                     hijo,
@@ -92,6 +81,8 @@ class BusquedaProfundidadAcotada(Busqueda):
                                     nodoActual.profundidad + 1
                                 )
                             )
+                            cerrados[hijo.cubo.visualizar()] = hijo
+
 
         if solucion:
             lista = []
@@ -179,10 +170,117 @@ class BusquedaEstrella(Busqueda):
         abiertos.append(nodoInicial)
 
         while not solucion and len(abiertos) > 0:
+            abiertos.sort(key=lambda n: n.f)
+            nodoActual = abiertos.pop(0)
+            actual = nodoActual.estado
 
-            nodoActual = self.obtenerMejorNodo(abiertos)
-            abiertos.remove(nodoActual)
+            if actual.esFinal():
+                solucion = True
+            else:
+                cerrados[actual.cubo.visualizar()] = nodoActual
 
+                for operador in actual.operadoresAplicables():
+                    hijo = actual.aplicarOperador(operador)
+                    clave = hijo.cubo.visualizar()
+
+                    g_hijo = nodoActual.g + 1
+                    h_hijo = hijo.heuristica()
+                    sucesor = NodoEstrella(hijo, nodoActual, operador, g_hijo, h_hijo)
+
+                    nodo_en_abiertos = None
+                    for n in abiertos:
+                        if n.estado.cubo.visualizar() == clave:
+                            nodo_en_abiertos = n
+                            break
+
+                    if nodo_en_abiertos is not None:
+                        if sucesor.g < nodo_en_abiertos.g:
+                            # actualizar nodo en abiertos
+                            ...
+                    elif clave in cerrados:
+                        if sucesor.g < cerrados[clave].g:
+                            # reabrir nodo
+                            ...
+                    else:
+                        abiertos.append(sucesor)
+
+        if solucion:
+            lista = []
+            nodo = nodoActual
+            while nodo.padre != None:
+                lista.insert(0, nodo.operador)
+                nodo = nodo.padre
+            return lista
+        else:
+            return None
+class BusquedaIDAEstrella(Busqueda):
+
+    def buscarSolucion(self, inicial):
+        cota = inicial.heuristica()
+
+        while True:
+            resultado = self._dfs(inicial, 0, cota)
+
+            if isinstance(resultado, list):
+                return resultado
+
+            if resultado == float('inf'):
+                return None
+
+            cota = resultado
+
+    def _dfs(self, estado, g, cota):
+        f = g + estado.heuristica()
+
+        if f > cota:
+            return f
+
+        if estado.esFinal():
+            return []
+
+        minimo = float('inf')
+
+        for operador in estado.operadoresAplicables():
+            hijo = estado.aplicarOperador(operador)
+
+            resultado = self._dfs(hijo, g + 1, cota)
+
+            if isinstance(resultado, list):
+                return [operador] + resultado
+
+            minimo = min(minimo, resultado)
+
+        return minimo
+  
+  
+class BusquedaAEstrellaPonderada(Busqueda):
+
+    def __init__(self, w=1.5):
+        self.w = w
+
+    def buscarSolucion(self, inicial):
+        solucion = False
+        abiertos = []
+        cerrados = dict()
+        nodoActual = None
+
+        # Nodo inicial
+        nodoInicial = NodoEstrella(
+            inicial,
+            None,
+            None,
+            0,
+            inicial.heuristica()
+        )
+        #  modificar f con peso
+        nodoInicial.f = nodoInicial.g + self.w * nodoInicial.h
+
+        abiertos.append(nodoInicial)
+
+        while not solucion and len(abiertos) > 0:
+            # ordenar por f ponderada
+            abiertos.sort(key=lambda n: n.f)
+            nodoActual = abiertos.pop(0)
             actual = nodoActual.estado
 
             if actual.esFinal():
@@ -197,145 +295,35 @@ class BusquedaEstrella(Busqueda):
                     g_hijo = nodoActual.g + 1
                     h_hijo = hijo.heuristica()
 
-                    sucesor = NodoEstrella(hijo, nodoActual, operador, g_hijo, h_hijo)
+                    sucesor = NodoEstrella(
+                        hijo,
+                        nodoActual,
+                        operador,
+                        g_hijo,
+                        h_hijo
+                    )
 
-                    if clave not in cerrados:
-                        repetido = self.buscarNodoEnAbiertos(abiertos, clave)
+                
+                    sucesor.f = g_hijo + self.w * h_hijo
 
-                        if repetido is None:
+                    # comprobar si está en abiertos
+                    nodo_en_abiertos = None
+                    for n in abiertos:
+                        if n.estado.cubo.visualizar() == clave:
+                            nodo_en_abiertos = n
+                            break
+
+                    if nodo_en_abiertos is not None:
+                        if sucesor.g < nodo_en_abiertos.g:
+                            abiertos.remove(nodo_en_abiertos)
                             abiertos.append(sucesor)
-                        else:
-                            if sucesor.g < repetido.g:
-                                repetido.padre = nodoActual
-                                repetido.operador = operador
-                                repetido.g = sucesor.g
-                                repetido.h = sucesor.h
-                                repetido.f = sucesor.f
 
-        if solucion:
-            lista = []
-            nodo = nodoActual
-            while nodo.padre != None:
-                lista.insert(0, nodo.operador)
-                nodo = nodo.padre
-            return lista
-        else:
-            return None
-
-    def obtenerMejorNodo(self, abiertos):
-        mejor = abiertos[0]
-        for nodo in abiertos:
-            if nodo.f < mejor.f:
-                mejor = nodo
-        return mejor
-
-    def buscarNodoEnAbiertos(self, abiertos, clave):
-        for nodo in abiertos:
-            if nodo.estado.cubo.visualizar() == clave:
-                return nodo
-        return None
-        
-class BusquedaIDAEstrella(Busqueda):
-
-    def buscarSolucion(self, inicial):
-
-        nueva_cota = inicial.heuristica()   # f = g(0) + h
-        solucion = False
-
-        while not solucion:
-
-            cota = nueva_cota
-            nueva_cota = float('inf')
-
-            abiertos = []
-            abiertos.append((inicial, None, None, 0))  
-            # (estado, padre, operador, g)
-
-            while len(abiertos) > 0 and not solucion:
-
-                actual, padre, operador, g = abiertos.pop(0)
-
-                if actual.esFinal():
-                    solucion = True
-                    nodoActual = (actual, padre, operador)
-                    break
-
-                else:
-                    for op in actual.operadoresAplicables():
-
-                        hijo = actual.aplicarOperador(op)
-                        g_hijo = g + 1
-                        f_hijo = g_hijo + hijo.heuristica()
-
-                        if f_hijo <= cota:
-                            abiertos.insert(0, (hijo, (actual, padre, operador), op, g_hijo))
-                        else:
-                            if f_hijo < nueva_cota:
-                                nueva_cota = f_hijo
-
-        # reconstrucción de solución
-        lista = []
-        nodo = nodoActual
-
-        while nodo[1] is not None:
-            lista.insert(0, nodo[2])
-            nodo = nodo[1]
-
-        return lista
-  
-class BusquedaAEstrellaPonderada(Busqueda):
-
-    def buscarSolucion(self, inicial):
-        solucion = False
-        abiertos = []
-        cerrados = dict()
-        nodoActual = None
-        w = 1.5
-
-        nodoInicial = NodoEstrella(inicial, None, None, 0, inicial.heuristica())
-        nodoInicial.f = nodoInicial.g + w * nodoInicial.h
-        abiertos.append(nodoInicial)
-
-        while not solucion and len(abiertos) > 0:
-            nodoActual = abiertos[0]
-            for nodo in abiertos:
-                if nodo.f < nodoActual.f:
-                    nodoActual = nodo
-
-            abiertos.remove(nodoActual)
-            actual = nodoActual.estado
-
-            if actual.esFinal():
-                solucion = True
-            else:
-                cerrados[actual.cubo.visualizar()] = nodoActual
-
-                for operador in actual.operadoresAplicables():
-                    hijo = actual.aplicarOperador(operador)
-                    clave = hijo.cubo.visualizar()
-
-                    if clave not in cerrados:
-                        g_hijo = nodoActual.g + 1
-                        h_hijo = hijo.heuristica()
-
-                        sucesor = NodoEstrella(hijo, nodoActual, operador, g_hijo, h_hijo)
-                        sucesor.f = sucesor.g + w * sucesor.h
-
-                        repetido = None
-                        for nodo in abiertos:
-                            if nodo.estado.cubo.visualizar() == clave:
-                                repetido = nodo
-                                break
-
-                        if repetido is None:
+                    elif clave in cerrados:
+                        if sucesor.g < cerrados[clave].g:
                             abiertos.append(sucesor)
-                        else:
-                            if sucesor.g < repetido.g:
-                                repetido.padre = nodoActual
-                                repetido.operador = operador
-                                repetido.g = sucesor.g
-                                repetido.h = sucesor.h
-                                repetido.f = sucesor.f
+
+                    else:
+                        abiertos.append(sucesor)
 
         if solucion:
             lista = []
