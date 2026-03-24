@@ -21,7 +21,8 @@ print("CUBO resultado del movimiento F:\n" + cubo.visualizar())
 cubo = Cubo()   # reiniciar antes de mezclar(busqueda IDA)
 
 #  AQUÍ VA EL CAMBIO
-movsMezcla = [cubo.Ui, cubo.Ui, cubo.R]
+#movsMezcla = [cubo.Ui, cubo.Ui, cubo.R] #3 movimientos 
+movsMezcla = [cubo.Ui, cubo.Ui, cubo.R, cubo.Ri, cubo.R, cubo.F, cubo.Bi]
 
 for m in movsMezcla:
     cubo.mover(m)
