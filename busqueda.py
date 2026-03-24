@@ -189,9 +189,21 @@ class BusquedaVoraz(Busqueda):
         abiertos = []
         cerrados = dict()
 
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         abiertos.append(NodoVoraz(inicial, None, None, self.heuristica(inicial)))
 
         while not solucion and len(abiertos) > 0:
+            self.nodos_explorados += 1
+            self.suma_abiertos += len(abiertos)
+            self.iteraciones += 1
+
+            if len(abiertos) > self.tam_abiertos_max:
+                self.tam_abiertos_max = len(abiertos)
+
             abiertos.sort(key=lambda nodo: nodo.heuristica)
             nodoActual = abiertos.pop(0)
             actual = nodoActual.estado
@@ -209,9 +221,17 @@ class BusquedaVoraz(Busqueda):
                         for nodo in abiertos:
                             if nodo.estado.cubo.visualizar() == hijo.cubo.visualizar():
                                 repetido = True
+                                break
 
                         if not repetido:
-                            abiertos.append(NodoVoraz(hijo, nodoActual, operador, self.heuristica(hijo)))
+                            abiertos.append(
+                                NodoVoraz(hijo, nodoActual, operador, self.heuristica(hijo))
+                            )
+
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
 
         if solucion:
             lista = []
@@ -231,11 +251,28 @@ class BusquedaEstrella(Busqueda):
         cerrados = dict()
         nodoActual = None
 
+        # métricas
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         nodoInicial = NodoEstrella(inicial, None, None, 0, inicial.heuristica())
         abiertos.append(nodoInicial)
 
         while not solucion and len(abiertos) > 0:
+
+            # métricas
+            self.nodos_explorados += 1
+            self.suma_abiertos += len(abiertos)
+            self.iteraciones += 1
+
+            if len(abiertos) > self.tam_abiertos_max:
+                self.tam_abiertos_max = len(abiertos)
+
+            # ordenar por f (más pequeño primero)
             abiertos.sort(key=lambda n: n.f)
+
             nodoActual = abiertos.pop(0)
             actual = nodoActual.estado
 
@@ -250,24 +287,25 @@ class BusquedaEstrella(Busqueda):
 
                     g_hijo = nodoActual.g + 1
                     h_hijo = hijo.heuristica()
+
                     sucesor = NodoEstrella(hijo, nodoActual, operador, g_hijo, h_hijo)
 
-                    nodo_en_abiertos = None
+                    # comprobar si está en abiertos
+                    repetido = False
                     for n in abiertos:
                         if n.estado.cubo.visualizar() == clave:
-                            nodo_en_abiertos = n
+                            repetido = True
                             break
 
-                    if nodo_en_abiertos is not None:
-                        if sucesor.g < nodo_en_abiertos.g:
-                            # actualizar nodo en abiertos
-                            ...
-                    elif clave in cerrados:
-                        if sucesor.g < cerrados[clave].g:
-                            # reabrir nodo
-                            ...
-                    else:
+                    # si no está ni en abiertos ni en cerrados → añadir
+                    if not repetido and clave not in cerrados:
                         abiertos.append(sucesor)
+
+        # calcular media
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
 
         if solucion:
             lista = []
@@ -278,23 +316,47 @@ class BusquedaEstrella(Busqueda):
             return lista
         else:
             return None
+
+
 class BusquedaIDAEstrella(Busqueda):
 
     def buscarSolucion(self, inicial):
         cota = inicial.heuristica()
 
+        # métricas
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         while True:
-            resultado = self._dfs(inicial, 0, cota)
+            resultado = self._dfs(inicial, 0, cota, 1)
 
             if isinstance(resultado, list):
+                if self.iteraciones > 0:
+                    self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+                else:
+                    self.tam_abiertos_medio = 0
                 return resultado
 
             if resultado == float('inf'):
+                if self.iteraciones > 0:
+                    self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+                else:
+                    self.tam_abiertos_medio = 0
                 return None
 
             cota = resultado
 
-    def _dfs(self, estado, g, cota):
+    def _dfs(self, estado, g, cota, tam_abiertos):
+        # métricas
+        self.nodos_explorados += 1
+        self.suma_abiertos += tam_abiertos
+        self.iteraciones += 1
+
+        if tam_abiertos > self.tam_abiertos_max:
+            self.tam_abiertos_max = tam_abiertos
+
         f = g + estado.heuristica()
 
         if f > cota:
@@ -308,15 +370,15 @@ class BusquedaIDAEstrella(Busqueda):
         for operador in estado.operadoresAplicables():
             hijo = estado.aplicarOperador(operador)
 
-            resultado = self._dfs(hijo, g + 1, cota)
+            resultado = self._dfs(hijo, g + 1, cota, tam_abiertos + 1)
 
             if isinstance(resultado, list):
                 return [operador] + resultado
 
-            minimo = min(minimo, resultado)
+            if resultado < minimo:
+                minimo = resultado
 
         return minimo
-  
   
 class BusquedaAEstrellaPonderada(Busqueda):
 
@@ -329,7 +391,12 @@ class BusquedaAEstrellaPonderada(Busqueda):
         cerrados = dict()
         nodoActual = None
 
-        # Nodo inicial
+        # métricas
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         nodoInicial = NodoEstrella(
             inicial,
             None,
@@ -337,14 +404,22 @@ class BusquedaAEstrellaPonderada(Busqueda):
             0,
             inicial.heuristica()
         )
-        #  modificar f con peso
-        nodoInicial.f = nodoInicial.g + self.w * nodoInicial.h
 
+        nodoInicial.f = nodoInicial.g + self.w * nodoInicial.h
         abiertos.append(nodoInicial)
 
         while not solucion and len(abiertos) > 0:
-            # ordenar por f ponderada
+
+            # métricas
+            self.nodos_explorados += 1
+            self.suma_abiertos += len(abiertos)
+            self.iteraciones += 1
+
+            if len(abiertos) > self.tam_abiertos_max:
+                self.tam_abiertos_max = len(abiertos)
+
             abiertos.sort(key=lambda n: n.f)
+
             nodoActual = abiertos.pop(0)
             actual = nodoActual.estado
 
@@ -368,27 +443,23 @@ class BusquedaAEstrellaPonderada(Busqueda):
                         h_hijo
                     )
 
-                
                     sucesor.f = g_hijo + self.w * h_hijo
 
-                    # comprobar si está en abiertos
-                    nodo_en_abiertos = None
+                    # evitar repetidos (versión simple)
+                    repetido = False
                     for n in abiertos:
                         if n.estado.cubo.visualizar() == clave:
-                            nodo_en_abiertos = n
+                            repetido = True
                             break
 
-                    if nodo_en_abiertos is not None:
-                        if sucesor.g < nodo_en_abiertos.g:
-                            abiertos.remove(nodo_en_abiertos)
-                            abiertos.append(sucesor)
-
-                    elif clave in cerrados:
-                        if sucesor.g < cerrados[clave].g:
-                            abiertos.append(sucesor)
-
-                    else:
+                    if not repetido and clave not in cerrados:
                         abiertos.append(sucesor)
+
+        # calcular media
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
 
         if solucion:
             lista = []
