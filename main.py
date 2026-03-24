@@ -15,6 +15,8 @@ cubo.mover(cubo.F)
 
 print("CUBO resultado del movimiento F:\n" + cubo.visualizar())
 
+cubo = Cubo()   # reiniciar antes de mezclar(busqueda IDA)
+
 movs=int(sys.argv[1])
 
 movsMezcla = cubo.mezclar(movs)
@@ -36,10 +38,6 @@ print("CUBO INICIAL (MEZCLADO):\n" + cubo.visualizar())
 #problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6)) 
 #problema = Problema(EstadoRubik(cubo), BusquedaEstrella())
 problema = Problema(EstadoRubik(cubo), BusquedaIDAEstrella())
-opsSolucion = problema.obtenerSolucion()
-for o in opsSolucion:
-    print(cubo.visualizarMovimiento(o.getEtiqueta()))
-    cubo.mover(o.movimiento)
 
 
 
