@@ -51,17 +51,18 @@ class BusquedaAnchura(Busqueda):
         
 
 class BusquedaProfundidadAcotada(Busqueda):
-    def __init__(self, cota = 6):
+    def __init__(self, cota=6):
         self.cota = cota
+
     def buscarSolucion(self, inicial):
         nodoActual = None
         actual, hijo = None, None
         solucion = False
         abiertos = []
         cerrados = dict()
+
         abiertos.append(NodoProfundidad(inicial, None, None, 0))
-        cerrados[inicial.cubo.visualizar()] = inicial
-        
+
         while not solucion and len(abiertos) > 0:
             nodoActual = abiertos.pop()
             actual = nodoActual.estado
@@ -69,10 +70,20 @@ class BusquedaProfundidadAcotada(Busqueda):
             if actual.esFinal():
                 solucion = True
             else:
+                cerrados[actual.cubo.visualizar()] = actual
+
                 if nodoActual.profundidad < self.cota:
                     for operador in actual.operadoresAplicables():
                         hijo = actual.aplicarOperador(operador)
-                        if hijo.cubo.visualizar() not in cerrados.keys():
+                        clave = hijo.cubo.visualizar()
+
+                        esta_en_abiertos = False
+                        for nodo in abiertos:
+                            if nodo.estado.cubo.visualizar() == clave:
+                                esta_en_abiertos = True
+                                break
+
+                        if not esta_en_abiertos and clave not in cerrados:
                             abiertos.append(
                                 NodoProfundidad(
                                     hijo,
@@ -81,8 +92,6 @@ class BusquedaProfundidadAcotada(Busqueda):
                                     nodoActual.profundidad + 1
                                 )
                             )
-                            cerrados[hijo.cubo.visualizar()] = hijo
-
 
         if solucion:
             lista = []
