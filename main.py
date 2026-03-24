@@ -54,12 +54,12 @@ print("CUBO INICIAL (MEZCLADO):\n" + cubo.visualizar())
 #Descomentar una vez se implemente la búsqueda en anchura
 #Creación de un problema
 #problema = Problema(EstadoRubik(cubo), BusquedaAnchura())
-#problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6))
+problema = Problema(EstadoRubik(cubo), BusquedaProfundidadAcotada(6))
 #problema = Problema(EstadoRubik(cubo), BusquedaProfundidadIterativa())
 #problema = Problema(EstadoRubik(cubo), BusquedaVoraz())
 #problema = Problema(EstadoRubik(cubo), BusquedaEstrella())
 #problema = Problema(EstadoRubik(cubo), BusquedaIDAEstrella())
-problema = Problema(EstadoRubik(cubo), BusquedaAEstrellaPonderada())
+#problema = Problema(EstadoRubik(cubo), BusquedaAEstrellaPonderada())
 
 
 
@@ -72,6 +72,9 @@ fin = time.time()
 
 tiempo = fin - inicio
 print("TIEMPO DE BUSQUEDA:", tiempo, "segundos")
+print("NODOS EXPLORADOS:", problema.buscador.nodos_explorados)
+print("TAM MAX ABIERTOS:", problema.buscador.tam_abiertos_max)
+print("TAM MEDIO ABIERTOS:", problema.buscador.tam_abiertos_medio)
 
 if opsSolucion != None:
     for o in opsSolucion:

@@ -25,11 +25,25 @@ class BusquedaAnchura(Busqueda):
         solucion = False #prueba
         abiertos = []
         cerrados = dict()
+        
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         abiertos.append(NodoAnchura(inicial, None, None))
         cerrados[inicial.cubo.visualizar()]=inicial
         while not solucion and len(abiertos)>0:
+            self.nodos_explorados += 1
+            self.suma_abiertos += len(abiertos)
+            self.iteraciones += 1
+
+            if len(abiertos) > self.tam_abiertos_max:
+                self.tam_abiertos_max = len(abiertos)
+
             nodoActual = abiertos.pop(0) #tarea 1
             actual = nodoActual.estado
+
             if actual.esFinal():
                 solucion = True
             else:
@@ -39,10 +53,16 @@ class BusquedaAnchura(Busqueda):
                     if hijo.cubo.visualizar() not in cerrados.keys():
                         abiertos.append(NodoAnchura(hijo, nodoActual, operador))
                         cerrados[hijo.cubo.visualizar()] = hijo #utilizamos CERRADOS para mantener también traza de los nodos añadidos a ABIERTOS 
+
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
+
         if solucion:
             lista = []
             nodo = nodoActual
-            while nodo.padre != None: #Asciende hasta la raíz
+            while nodo.padre != None:   # Asciende hasta la raíz
                 lista.insert(0, nodo.operador)
                 nodo = nodo.padre
             return lista
@@ -51,18 +71,32 @@ class BusquedaAnchura(Busqueda):
         
 
 class BusquedaProfundidadAcotada(Busqueda):
-    def __init__(self, cota = 6):
+    def __init__(self, cota=6):
         self.cota = cota
+
     def buscarSolucion(self, inicial):
         nodoActual = None
         actual, hijo = None, None
         solucion = False
         abiertos = []
         cerrados = dict()
+
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         abiertos.append(NodoProfundidad(inicial, None, None, 0))
         cerrados[inicial.cubo.visualizar()] = inicial
-        
+
         while not solucion and len(abiertos) > 0:
+            self.nodos_explorados += 1
+            self.suma_abiertos += len(abiertos)
+            self.iteraciones += 1
+
+            if len(abiertos) > self.tam_abiertos_max:
+                self.tam_abiertos_max = len(abiertos)
+
             nodoActual = abiertos.pop()
             actual = nodoActual.estado
 
@@ -83,6 +117,10 @@ class BusquedaProfundidadAcotada(Busqueda):
                             )
                             cerrados[hijo.cubo.visualizar()] = hijo
 
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
 
         if solucion:
             lista = []
@@ -100,11 +138,38 @@ class BusquedaProfundidadIterativa(Busqueda):
         self.cota_max = cota_max
 
     def buscarSolucion(self, inicial):
+
+        self.nodos_explorados = 0
+        self.tam_abiertos_max = 0
+        self.suma_abiertos = 0
+        self.iteraciones = 0
+
         for cota in range(self.cota_inicial, self.cota_max + 1):
-            busqueda_acotada = BusquedaProfundidadAcotada(cota)
-            solucion = busqueda_acotada.buscarSolucion(inicial)
-            if solucion is not None:
+
+            buscador = BusquedaProfundidadAcotada(cota)
+            solucion = buscador.buscarSolucion(inicial)
+
+            # 🔹 MÉTRICAS
+            self.nodos_explorados += buscador.nodos_explorados
+            self.suma_abiertos += buscador.suma_abiertos
+            self.iteraciones += buscador.iteraciones
+
+            if buscador.tam_abiertos_max > self.tam_abiertos_max:
+                self.tam_abiertos_max = buscador.tam_abiertos_max
+
+            if solucion != None:
+                if self.iteraciones > 0:
+                    self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+                else:
+                    self.tam_abiertos_medio = 0
+
                 return solucion
+
+        if self.iteraciones > 0:
+            self.tam_abiertos_medio = self.suma_abiertos / self.iteraciones
+        else:
+            self.tam_abiertos_medio = 0
+
         return None
     
 class BusquedaVoraz(Busqueda):
