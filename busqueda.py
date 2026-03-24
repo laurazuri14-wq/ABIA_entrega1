@@ -276,32 +276,24 @@ class BusquedaIDAEstrella(Busqueda):
   
 class BusquedaAEstrellaPonderada(Busqueda):
 
-    def __init__(self, w=1.5):
-        self.w = w
-
     def buscarSolucion(self, inicial):
         solucion = False
         abiertos = []
         cerrados = dict()
         nodoActual = None
+        w = 1.5
 
-        # Nodo inicial
-        nodoInicial = NodoEstrella(
-            inicial,
-            None,
-            None,
-            0,
-            inicial.heuristica()
-        )
-        # ⚠️ modificar f con peso
-        nodoInicial.f = nodoInicial.g + self.w * nodoInicial.h
-
+        nodoInicial = NodoEstrella(inicial, None, None, 0, inicial.heuristica())
+        nodoInicial.f = nodoInicial.g + w * nodoInicial.h
         abiertos.append(nodoInicial)
 
         while not solucion and len(abiertos) > 0:
-            # ordenar por f ponderada
-            abiertos.sort(key=lambda n: n.f)
-            nodoActual = abiertos.pop(0)
+            nodoActual = abiertos[0]
+            for nodo in abiertos:
+                if nodo.f < nodoActual.f:
+                    nodoActual = nodo
+
+            abiertos.remove(nodoActual)
             actual = nodoActual.estado
 
             if actual.esFinal():
@@ -313,38 +305,28 @@ class BusquedaAEstrellaPonderada(Busqueda):
                     hijo = actual.aplicarOperador(operador)
                     clave = hijo.cubo.visualizar()
 
-                    g_hijo = nodoActual.g + 1
-                    h_hijo = hijo.heuristica()
+                    if clave not in cerrados:
+                        g_hijo = nodoActual.g + 1
+                        h_hijo = hijo.heuristica()
 
-                    sucesor = NodoEstrella(
-                        hijo,
-                        nodoActual,
-                        operador,
-                        g_hijo,
-                        h_hijo
-                    )
+                        sucesor = NodoEstrella(hijo, nodoActual, operador, g_hijo, h_hijo)
+                        sucesor.f = sucesor.g + w * sucesor.h
 
-                    # ⚠️ AQUÍ está la diferencia clave
-                    sucesor.f = g_hijo + self.w * h_hijo
+                        repetido = None
+                        for nodo in abiertos:
+                            if nodo.estado.cubo.visualizar() == clave:
+                                repetido = nodo
+                                break
 
-                    # comprobar si está en abiertos
-                    nodo_en_abiertos = None
-                    for n in abiertos:
-                        if n.estado.cubo.visualizar() == clave:
-                            nodo_en_abiertos = n
-                            break
-
-                    if nodo_en_abiertos is not None:
-                        if sucesor.g < nodo_en_abiertos.g:
-                            abiertos.remove(nodo_en_abiertos)
+                        if repetido is None:
                             abiertos.append(sucesor)
-
-                    elif clave in cerrados:
-                        if sucesor.g < cerrados[clave].g:
-                            abiertos.append(sucesor)
-
-                    else:
-                        abiertos.append(sucesor)
+                        else:
+                            if sucesor.g < repetido.g:
+                                repetido.padre = nodoActual
+                                repetido.operador = operador
+                                repetido.g = sucesor.g
+                                repetido.h = sucesor.h
+                                repetido.f = sucesor.f
 
         if solucion:
             lista = []
